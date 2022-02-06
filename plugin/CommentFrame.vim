@@ -54,7 +54,7 @@ endfunction
 "            character to fill space (e.g. '*', '-', '=', ' '),
 "            number of spaces to leave around title string
 "            title string on right side of line)
-function! s:CommentRight(start_str, end_str, line_width, right_width, title_fill, spacing, titlestring)
+function! s:CommentRight(start_str, end_str, line_width, title_fill, spacing, titlestring)
   " check and mod arg vars
   let l:title_fill = s:CheckNotEmpty(' ', a:title_fill)
 
@@ -62,17 +62,17 @@ function! s:CommentRight(start_str, end_str, line_width, right_width, title_fill
   let l:titlestr = repeat(' ', a:spacing) . a:titlestring . repeat(' ', a:spacing)
 
   " combine and count
-  let l:middle_length=a:line_width - len(a:start_str . a:end_str)
-  let l:title_right_length=a:right_width
-  let l:title_right = repeat(l:title_fill, l:title_right_length)
-  let l:title_left_length=(l:middle_length - len(l:titlestr) - l:title_right_length)
+	let l:middle_length=a:line_width - len(a:start_str . a:end_str)
+	let l:title_left_length=((l:middle_length / 2) - (len(l:titlestr) / 2))
   let l:title_left = repeat(l:title_fill, l:title_left_length)
-
+	let l:title_right_length=l:middle_length - len(l:title_left) - len(l:titlestr)
+  let l:title_right = repeat(l:title_fill, l:title_right_length)
+  
   " build title_line
-	let title_line=a:start_str . l:title_left . l:titlestr . l:title_right . a:end_str
+	let l:title_line=a:start_str . l:title_left . l:titlestr . l:title_right . a:end_str
 
   " add comment lines to doc
-  call append(line('.'), l:title_line)
+	call append(line('.'), l:title_line)
 endfunction
 "}}}
 
@@ -133,8 +133,8 @@ function! CommentFrame#Custom(start_str, end_str, line_width,
 endfunction
 
 function! CommentFrame#CustomRight(start_str, end_str, line_width,
-                     \right_width, title_fill, numspaces, titlestring)
-  call s:CommentRight(a:start_str, a:end_str, a:line_width, a:right_width, 
+                     \title_fill, numspaces, titlestring)
+  call s:CommentRight(a:start_str, a:end_str, a:line_width,
                      \a:title_fill, a:numspaces, a:titlestring)
 endfunction
 
@@ -143,64 +143,18 @@ function! CommentFrame#MapKeys(modes, keys, target)
 endfunction
 "}}}
 
-"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Commands, Mappings of Custom Functions {{{ ~~~~~
-command! -nargs=+ CommentFrameCustom :call CommentFrame#Custom(<args>)
-if s:domaps|call s:MapKeys("ni", "fcu", ":CommentFrameCustom '#','#',s:fw,'=','-',3,''<Left>")|endif
-
-command! -nargs=+ CommentRightCustom :call CommentFrame#CustomRight(<args>)
-if s:domaps|call s:MapKeys("ni", "frc", ":CommentRightCustom '#','',s:fw,5,'~',1,''<Left>")|endif
-
-"}}}
-
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Languages, CommentFrame {{{ ~~~~~
 command! -nargs=+ CommentFrameSlashes     : call CommentFrame#Custom('//', '//', s:fw, '*', ' ', 0, <args>)
 if s:domaps|call s:MapKeys('ni', 'fcs', ':CommentFrameSlashes ""<Left>')|endif
 
-command! -nargs=+ CommentFrameSlashStar   : call CommentFrame#Custom('/*', '*/', s:fw, '*', ' ', 0, <args>)
-if s:domaps|call s:MapKeys('ni', 'fcS', ':CommentFrameSlashStar ""<Left>')|endif
+command! -nargs=+ CommentRightSlashes   : call CommentFrame#CustomRight('//', '//', s:fw, '*', 4, <args>)
+if s:domaps|call s:MapKeys('ni', 'fcS', ':CommentRightSlashes ""<Left>')|endif
 
-command! -nargs=+ CommentFrameHashDash    : call CommentFrame#Custom('#', '#', s:fw, '-', ' ', 0, <args>)
-if s:domaps|call s:MapKeys('ni', 'fch', ':CommentFrameHashDash ""<Left>')|endif
-
-command! -nargs=+ CommentFrameHashEqual   : call CommentFrame#Custom('#', '#', s:fw, '=', '-', 5, <args>)
-if s:domaps|call s:MapKeys('ni', 'fcH', ':CommentFrameHashEqual ""<Left>')|endif
-
-command! -nargs=+ CommentFrameQuoteDash   : call CommentFrame#Custom('"', '"', s:fw, '-', ' ', 5, <args>)
-if s:domaps|call s:MapKeys('ni', 'fcq', ':CommentFrameQuoteDash ""<Left>')|endif
-
-command! -nargs=+ CommentFrameQuoteTilde  : call CommentFrame#Custom('"', '"', s:fw, '~', ' ', 5, <args>)
-if s:domaps|call s:MapKeys('ni', 'fcQ', ':CommentFrameQuoteTilde ""<Left>')|endif
-
-"}}}
-
-"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Languages, CommentRight {{{ ~~~~~
-command! -nargs=+ CommentRightHash      : call CommentFrame#CustomRight('#', '', s:fw, 5, '~', 1, <args>)
-if s:domaps|call s:MapKeys('ni', 'frh', ':CommentRightHash ""<Left>')|endif
-
-command! -nargs=+ CommentRightSlashes   : call CommentFrame#CustomRight('//', '', s:fw, 5, '~', 1, <args>)
-if s:domaps|call s:MapKeys('ni', 'frs', ':CommentRightSlashes ""<Left>')|endif
-
-command! -nargs=+ CommentRightSlashStar : call CommentFrame#CustomRight('/*', '*/', s:fw, 5, '~', 1, <args>)
-if s:domaps|call s:MapKeys('ni', 'frS', ':CommentRightSlashStar ""<Left>')|endif
-
-command! -nargs=+ CommentRightQuote     : call CommentFrame#CustomRight('"', '', s:fw, 5, '~', 1, <args>)
-if s:domaps|call s:MapKeys('ni', 'frq', ':CommentRightQuote ""<Left>')|endif
 
 "}}}
 
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Plugin Menu Creation {{{ ~~~~~
-amenu .170.1 &Plugin.Comment&Frames.&Frame\ Custom        :CommentFrameCustom '#','#',s:fw,'=','-',3,''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&Frame\ Hash\ Dash    :CommentFrameHashDash ''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&Frame\ Hash\ Equal   :CommentFrameHashEqual ''<Left>
 amenu .170.1 &Plugin.Comment&Frames.&Frame\ Slashes       :CommentFrameSlashes ''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&Frame\ Slash\ Star   :CommentFrameSlashStar ''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&Frame\ Quote\ Dash   :CommentFrameQuoteDash ''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&Frame\ Quote\ Tilde  :CommentFrameQuoteTilde ''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&-Rights- :
-amenu .170.1 &Plugin.Comment&Frames.&Right\ Custom        :CommentRightCustom '#','',s:fw,5,'~',1,''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&Right\ Hash          :CommentRightHash ''<Left>
 amenu .170.1 &Plugin.Comment&Frames.&Right\ Slashes       :CommentRightSlashes ''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&Right\ Slash\ Stars  :CommentRightSlashStar ''<Left>
-amenu .170.1 &Plugin.Comment&Frames.&Right\ Quote         :CommentRightQuote ''<Left>
 "}}}
 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~}}}
